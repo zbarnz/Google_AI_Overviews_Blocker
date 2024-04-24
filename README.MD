@@ -14,7 +14,7 @@ Google AI Overviews Blocker is a browser extension that enhances user experience
 
 ### From Chrome Web Store
 
-1. Download the extension from the chrome webstore: (waiting approval)
+1. Download the extension from the chrome webstore: [Hide Google AI Overviews](https://chromewebstore.google.com/detail/hide-google-ai-overviews/neibhohkbmfjninidnaoacabkjonbahn)
 2. Add it to your browser by clicking on 'Add to Chrome'.
 3. Once installed, the extension will automatically activate, and you will see AI overviews removed from your search results.
 
