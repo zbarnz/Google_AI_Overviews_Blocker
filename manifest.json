@@ -3,7 +3,7 @@
   "name": "Hide Google AI Overviews",
   "version": "1.0",
   "description": "Hide annoying Google AI Overviews.",
-  "permissions": ["storage", "scripting", "tabs"],
+  "permissions": ["storage", "scripting"],
   "icons": {
     "16": "icons/strikeAI16.png",
     "48": "icons/strikeAI48.png",
