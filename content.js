@@ -1,27 +1,29 @@
-//Backup script if content is every dynamically loaded
-//or if CSS fails for whatever reason...
+var headers = document.querySelectorAll("h1");
 
-var AIheaders = document.querySelectorAll("h1");
-var AIparentElement = document.querySelector(".M8OgIe");
-var AIparentElementPreLoad = document.querySelector(".rEow3c");
+function findParentWithCorrectAttributes(element) {
+  while (element && element.parentElement) {
+    element = element.parentElement;
+    if (element.hasAttribute("jsname") || element.hasAttribute("id")) {
+      return element;
+    }
+  }
+  return null;
+}
 
-if (
-  AIparentElementPreLoad &&
-  AIparentElementPreLoad.firstChild.tagName === "H1" &&
-  AIparentElementPreLoad.firstChild.textContent.trim() === "Search Results"
-) {
-  AIparentElementPreLoad.style.display = "none";
-} else if (
-  AIparentElement &&
-  AIparentElement.firstChild.tagName === "H1" &&
-  AIparentElement.firstChild.textContent.trim() === "Search Results"
-) {
-  AIparentElement.style.display = "none";
-} else {
-  // Iterate through each h1 element to find the one with the exact text "AI Overview"
-  Array.from(AIheaders).forEach(function (header) {
-    if (header.textContent.trim() === "AI Overview") {
+// Iterate through each h1 element to find the one with the exact text "AI Overview"
+Array.from(headers).forEach(function (header) {
+  if (header.textContent.trim() === "AI Overview") {
+    const parent = findParentWithCorrectAttributes(header);
+    if (parent) {
+      parent.style.display = "none";
+    } else {
       header.parentNode.style.display = "none";
     }
-  });
-}
+
+    if (parent.className || header.parentNode.className) {
+      chrome.storage.local.set({
+        "overviewClass": parent.className || header.parentNode.className,
+      });
+    }
+  }
+});
