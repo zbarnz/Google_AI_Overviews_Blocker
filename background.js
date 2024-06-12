@@ -9,7 +9,7 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
         // If an ID is stored, inject CSS to hide the element with that ID
         const classNames = result.overviewClass.split(" ");
         const cssCode = classNames
-          .map((className) => `.${className} { display: none !important; }`)
+          .map((className) => `.${className} * { display: none !important; }`)
           .join(" ");
         chrome.scripting.insertCSS(
           {

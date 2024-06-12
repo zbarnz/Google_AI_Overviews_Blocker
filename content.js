@@ -15,14 +15,18 @@ Array.from(headers).forEach(function (header) {
   if (header.textContent.trim() === "AI Overview") {
     const parent = findParentWithCorrectAttributes(header);
     if (parent) {
-      parent.style.display = "none";
+      parent.querySelectorAll("*").forEach((child) => {
+        child.style.display = "none";
+      });
     } else {
-      header.parentNode.style.display = "none";
+      header.parentNode.querySelectorAll("*").forEach((child) => {
+        child.style.display = "none";
+      });
     }
 
     if (parent.className || header.parentNode.className) {
       chrome.storage.local.set({
-        "overviewClass": parent.className || header.parentNode.className,
+        overviewClass: parent.className || header.parentNode.className,
       });
     }
   }
