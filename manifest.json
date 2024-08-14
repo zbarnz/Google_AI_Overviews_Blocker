@@ -14,7 +14,8 @@
     {
       "matches": ["*://*.google.com/search*"],
       "js": ["content.js"],
-      "type": "module"
+      "type": "module",
+      "run_at": "document_start"
     }
   ]
 }
