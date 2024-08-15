@@ -9,10 +9,16 @@
     "48": "icons/strikeAI48.png",
     "128": "icons/strikeAI128.png"
   },
-  "host_permissions": ["*://*.google.com/search*"],
+  "host_permissions": [
+    "*://*.google.com/search*",
+    "*://*.google.co.uk/search*"
+  ],
   "content_scripts": [
     {
-      "matches": ["*://*.google.com/search*"],
+      "matches": [
+        "*://*.google.com/search*",
+        "*://*.google.co.uk/search*"
+      ],
       "js": ["content.js"],
       "type": "module",
       "run_at": "document_start"
