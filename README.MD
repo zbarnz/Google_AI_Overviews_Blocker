@@ -18,7 +18,13 @@ Google AI Overviews Blocker is a browser extension that enhances user experience
 2. Add it to your browser by clicking on 'Add to Chrome'.
 3. Once installed, the extension will automatically activate, and you will see AI overviews removed from your search results.
 
-### Manual Installation
+### From Firefox Web Store
+
+1. Download the extension from the firefox Add-ons: [Hide Google AI Overviews](https://addons.mozilla.org/en-US/firefox/addon/hide-google-ai-overviews/)
+2. Add it to your browser by clicking on 'Add to Firefox'.
+3. Once installed, the extension will automatically activate, and you will see AI overviews removed from your search results.
+
+### Manual Installation (Chrome)
 
 1. Download the latest version of the extension from the [GitHub Releases](https://github.com/zbarnz/Google_AI_Overviews_Blocker/releases/tag/PublishedVersion) page.
 2. Unzip the downloaded file to a desired location on your computer.
@@ -36,3 +42,5 @@ No configuration is needed. Once installed, AI Overviews Blocker works automatic
 For support, feature requests, or to report a bug, please visit the [GitHub Issues](https://github.com/zbarnz/Google_AI_Overviews_Blocker/issues) page for the extension.
 
 ### [Follow me on GitHub](https://github.com/zbarnz)
+
+### [Buy me a Coffee](https://buymeacoffee.com/zbarnz)
