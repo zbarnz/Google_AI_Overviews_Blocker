@@ -393,5 +393,12 @@
       "type": "module",
       "run_at": "document_start"
     }
-  ]
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "Google_AI_Overviews_Blocker@zachbarnes.dev",
+      "strict_min_version": "58.0"
+    },
+    "gecko_android": {}
+  }
 }
