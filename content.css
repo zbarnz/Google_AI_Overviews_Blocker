@@ -1,0 +1,9 @@
+/* 
+    Selects parent of AI content div to hide.
+
+    :has() is supported from Chrome 105, Firefox 121.
+    See https://developer.mozilla.org/en-US/docs/Web/CSS/:has#browser_compatibility
+*/
+div:has(> #m-x-content) {
+    display: none;
+}
