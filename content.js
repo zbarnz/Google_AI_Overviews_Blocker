@@ -1,6 +1,7 @@
 const patterns = [
   /ai overview/i,  // en
   /übersicht mit ki/i, // de
+  /Přehled od AI/i, // cz
   /AI による概要/ // ja
 ]
 
