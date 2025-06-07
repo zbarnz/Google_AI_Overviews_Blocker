@@ -1,8 +1,9 @@
 const patterns = [
-  /ai overview/i,  // en
   /übersicht mit ki/i, // de
-  /AI による概要/ // ja
-]
+  /ai overview/i, // en
+  /AI による概要/, // ja
+  /prezentare generală generată de ai/i, // ro
+];
 
 const observer = new MutationObserver(() => {
   // each time there's a mutation in the document see if there's an ai overview to hide
