@@ -7,16 +7,21 @@ const patterns = [
 
 const observer = new MutationObserver(() => {
   // each time there's a mutation in the document see if there's an ai overview to hide
-  const aiOverviewH1 = [...document.querySelectorAll('h1')].find(h1 => patterns.some(pattern => pattern.test(h1.innerText)));
+  const mainBody = document.querySelector('div#rcnt');
+  const aiText = [...mainBody?.querySelectorAll('h1, h2')].find(e => patterns.some(pattern => pattern.test(e.innerText)));
 
-  if (aiOverviewH1?.parentElement) {
-    aiOverviewH1.parentElement.style.display = "none";
-  }
+  var aiOverview = aiText?.closest('div#rso > div'); // AI overview as a search result
+  if (!aiOverview) aiOverview = aiText?.closest('div#rcnt > div'); // AI overview above search results
 
-  const mainElement = document.querySelector('[role="main"]');
-  if (mainElement) {
-    mainElement.style.marginTop = "24px";
-  }
+  // Hide AI overview
+  if (aiOverview) aiOverview.style.display = "none";
+
+  // Restore padding after header tabs
+  const headerTabs = document.querySelector('div#hdtb-sc > div');
+  if (headerTabs) headerTabs.style.paddingBottom = "12px";
+
+  // For debugging
+  // console.log([...mainBody?.querySelectorAll('h1, h2')].map(e => { return { text: e.innerText, obj: e }}));
 });
 
 observer.observe(document, {
