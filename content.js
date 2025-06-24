@@ -3,7 +3,7 @@ const patterns = [
   /übersicht mit ki/i, // de
   /AI による概要/, // ja
   /AI-overzicht/i, // nl
-  /visión general creada por IA/i // es
+  /Vista creada con IA/i // es
 ]
 
 const observer = new MutationObserver(() => {
