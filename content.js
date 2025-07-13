@@ -1,8 +1,13 @@
 const patterns = [
   /übersicht mit ki/i, // de
   /ai overview/i, // en
-  /AI による概要/, // ja
   /prezentare generală generată de ai/i, // ro
+  /AI による概要/, // ja
+  /Обзор от ИИ/, // ru
+  /AI 摘要/, // zh-TW
+  /AI-overzicht/i, // nl
+  /Vista creada con IA/i, // es
+  /Přehled od AI/i, // cz
 ];
 
 const observer = new MutationObserver(() => {
@@ -22,6 +27,19 @@ const observer = new MutationObserver(() => {
 
   // For debugging
   // console.log([...mainBody?.querySelectorAll('h1, h2')].map(e => { return { text: e.innerText, obj: e }}));
+  const mainElement = document.querySelector('[role="main"]');
+  if (mainElement) {
+    mainElement.style.marginTop = "24px";
+  }
+
+  // Remove entries in "People also ask" section if it contains "AI overview"
+  const peopleAlsoAskAiOverviews = [
+    ...document.querySelectorAll("div.related-question-pair"),
+  ].filter((el) => patterns.some((pattern) => pattern.test(el.innerHTML)));
+
+  peopleAlsoAskAiOverviews.forEach((el) => {
+    el.parentElement.parentElement.style.display = "none";
+  });
 });
 
 observer.observe(document, {
