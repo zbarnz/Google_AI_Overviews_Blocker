@@ -3,6 +3,9 @@ const patterns = [
   /übersicht mit ki/i, // de
   /AI による概要/, // ja
   /AI 摘要/ // zh-TW
+  /AI-overzicht/i, // nl
+  /Vista creada con IA/i // es
+  /Přehled od AI/i, // cz
 ]
 
 const observer = new MutationObserver(() => {
@@ -17,6 +20,15 @@ const observer = new MutationObserver(() => {
   if (mainElement) {
     mainElement.style.marginTop = "24px";
   }
+
+  // Remove entries in "People also ask" section if it contains "AI overview"
+  const peopleAlsoAskAiOverviews = [
+    ...document.querySelectorAll("div.related-question-pair"),
+  ].filter((el) => patterns.some((pattern) => pattern.test(el.innerHTML)));
+
+  peopleAlsoAskAiOverviews.forEach((el) => {
+    el.parentElement.parentElement.style.display = "none";
+  });
 });
 
 observer.observe(document, {
