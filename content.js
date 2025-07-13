@@ -2,6 +2,7 @@ const patterns = [
   /ai overview/i,  // en
   /übersicht mit ki/i, // de
   /AI による概要/, // ja
+  /AI 摘要/ // zh-TW
   /AI-overzicht/i, // nl
   /Vista creada con IA/i // es
   /Přehled od AI/i, // cz
