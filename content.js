@@ -15,8 +15,7 @@ const observer = new MutationObserver(() => {
   const mainBody = document.querySelector('div#rcnt');
   const aiText = [...mainBody?.querySelectorAll('h1, h2')].find(e => patterns.some(pattern => pattern.test(e.innerText)));
 
-  var aiOverview = aiText?.closest('div#rso > div'); // AI overview as a search result
-  if (!aiOverview) aiOverview = aiText?.closest('div#rcnt > div'); // AI overview above search results
+  var aiOverview = aiText?.parentNode; // AI overview
 
   // Hide AI overview
   if (aiOverview) aiOverview.style.display = "none";
