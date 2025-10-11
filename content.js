@@ -40,6 +40,14 @@ const observer = new MutationObserver(() => {
   peopleAlsoAskAiOverviews.forEach((el) => {
     el.parentElement.parentElement.style.display = "none";
   });
+
+  // Hide AI Mode tab
+  const tabsList = document.querySelector('[role="list"]').children;
+  const aiModeTab = tabsList[0];
+  const aiModeTabSeparator = tabsList[1];
+
+  if (aiModeTab) aiModeTab.style.display = "none";
+  if (aiModeTabSeparator) aiModeTabSeparator.style.display = "none";
 });
 
 observer.observe(document, {
