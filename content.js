@@ -12,17 +12,19 @@ const patterns = [
 
 const observer = new MutationObserver(() => {
   // each time there's a mutation in the document see if there's an ai overview to hide
-  const mainBody = document.querySelector('div#rcnt');
-  const aiText = [...mainBody?.querySelectorAll('h1, h2')].find(e => patterns.some(pattern => pattern.test(e.innerText)));
+  const mainBody = document.querySelector("div#rcnt");
+  const aiText = [...mainBody?.querySelectorAll("h1, h2")].find((e) =>
+    patterns.some((pattern) => pattern.test(e.innerText))
+  );
 
-  var aiOverview = aiText?.closest('div#rso > div'); // AI overview as a search result
-  if (!aiOverview) aiOverview = aiText?.closest('div#rcnt > div'); // AI overview above search results
+  var aiOverview = aiText?.closest("div#rso > div"); // AI overview as a search result
+  if (!aiOverview) aiOverview = aiText?.closest("div#rcnt > div"); // AI overview above search results
 
   // Hide AI overview
   if (aiOverview) aiOverview.style.display = "none";
 
   // Restore padding after header tabs
-  const headerTabs = document.querySelector('div#hdtb-sc > div');
+  const headerTabs = document.querySelector("div#hdtb-sc > div");
   if (headerTabs) headerTabs.style.paddingBottom = "12px";
 
   // For debugging
@@ -45,7 +47,11 @@ const observer = new MutationObserver(() => {
   const tabsList = document.querySelector('[role="list"]').children;
   const aiModeTab = tabsList[0];
 
-  if (aiModeTab) aiModeTab.style.display = "none";
+  const text = aiModeTab.innerText.trim();
+
+  if (/^AI Mode$/i.test(text)) {
+    aiModeTab.style.display = "none";
+  }
 });
 
 observer.observe(document, {
