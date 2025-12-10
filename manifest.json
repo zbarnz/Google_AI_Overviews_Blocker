@@ -1,13 +1,13 @@
 {
   "manifest_version": 3,
   "name": "Hide Google AI Overviews",
-  "version": "1.5",
+  "version": "1.6",
   "description": "Hide annoying Google AI Overviews.",
   "permissions": ["scripting"],
   "icons": {
-    "16": "icons/strikeAI16.png",
-    "48": "icons/strikeAI48.png",
-    "128": "icons/strikeAI128.png"
+    "16": "src/assets/icons/strikeAI16.png",
+    "48": "src/assets/icons/strikeAI48.png",
+    "128": "src/assets/icons/strikeAI128.png"
   },
   "host_permissions": [
     "*://*.google.com/search*",
@@ -389,11 +389,22 @@
         "*://*.google.co.zw/search*",
         "*://*.google.cat/search*"
       ],
-      "js": ["content.js"],
-      "type": "module",
+      "js": ["src/content/content.js"],
       "run_at": "document_start"
     }
   ],
+  "background": {
+    "service_worker": "src/background/background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "src/popup/popup.html",
+    "default_icon": {
+      "16": "src/assets/icons/strikeAI16.png",
+      "48": "src/assets/icons/strikeAI48.png",
+      "128": "src/assets/icons/strikeAI128.png"
+    }
+  },
   "browser_specific_settings": {
     "gecko": {
       "id": "Google_AI_Overviews_Blocker@zachbarnes.dev",
