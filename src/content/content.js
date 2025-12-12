@@ -10,19 +10,10 @@ const patterns = [
   /Přehled od AI/i, // cz
 ];
 
-let enabled = true;
+let enabled;
 
-chrome.runtime.sendMessage({ type: "GET_ENABLED" }, (response) => {
-  if (response && typeof response.enabled === "boolean") {
-    enabled = response.enabled;
-  }
-});
-
-// Listen for changes from the popup
-chrome.runtime.onMessage.addListener((msg) => {
-  if (msg.type === "SET_ENABLED") {
-    enabled = msg.enabled;
-  }
+chrome.storage.local.get({ enabled: true }, (result) => {
+  enabled = result.enabled;
 });
 
 const observer = new MutationObserver(() => {
