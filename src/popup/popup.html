@@ -1,18 +1,30 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Extension Control</title>
+    <title>Hide Google AI Overviews</title>
     <link rel="stylesheet" href="popup.css" />
   </head>
   <body>
-    <div class="container">
-      <h3>Extension</h3>
-      <label class="switch">
-        <input id="toggle" type="checkbox" /> <span class="slider"></span>
-      </label>
-      <div id="status">Loading…</div>
+    <div class="card">
+      <header class="header">
+        <img
+          src="../assets/icons/strikeAI48.png"
+          alt="Extension icon"
+          class="icon"
+        />
+        <h1>Hide Google AI Overviews</h1>
+      </header>
+
+      <div class="control">
+        <span class="label" id="status">Loading...</span>
+        <label class="switch">
+          <input id="toggle" type="checkbox" />
+          <span class="slider"></span>
+        </label>
+      </div>
     </div>
+
     <script src="popup.js"></script>
   </body>
 </html>

@@ -17,18 +17,24 @@ chrome.storage.local.get({ enabled: true }, (result) => {
 });
 
 const observer = new MutationObserver(() => {
-  console.log(enabled);
-
   if (!enabled) return; // if disabled, do nothing
 
-  // each time there's a mutation in the document see if there's an ai overview to hide
-  const mainBody = document.querySelector("div#rcnt");
-  const aiText = [...mainBody?.querySelectorAll("h1, h2")].find((e) =>
-    patterns.some((pattern) => pattern.test(e.innerText))
-  );
+  let aiText;
 
-  var aiOverview = aiText?.closest("div#rso > div"); // AI overview as a search result
-  if (!aiOverview) aiOverview = aiText?.closest("div#rcnt > div"); // AI overview above search results
+  // each time there's a mutation in the document see if there's an ai overview to hide
+  //rcnt is the main ID for desktop, center_col is for mobile
+  const mainBody =
+    document.querySelector("div#rcnt") ||
+    document.querySelector("div#center_col");
+
+  if (mainBody) {
+    aiText = [...mainBody?.querySelectorAll("h1, h2")].find((e) =>
+      patterns.some((pattern) => pattern.test(e.innerText))
+    );
+  }
+
+  var aiOverview =
+    aiText?.closest("div#rso > div") || aiText?.closest("div#rcnt > div"); // AI overview as a search result
 
   // Hide AI overview
   if (aiOverview) aiOverview.style.display = "none";
@@ -63,6 +69,8 @@ const observer = new MutationObserver(() => {
     aiModeTab.style.display = "none";
   }
 });
+
+const observerConfig = { childList: true, subtree: true };
 
 observer.observe(document, {
   childList: true,
