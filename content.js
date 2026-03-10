@@ -9,6 +9,7 @@ const AI_OVERVIEW_PATTERNS = [
   /AI-overzicht/i, // nl
   /Vista creada con IA/i, // es
   /Přehled od AI/i, // cz
+  /Aperçu IA/i, // fr
 ];
 
 // CSS selectors for AI overview containers
