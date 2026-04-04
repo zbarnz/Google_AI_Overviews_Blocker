@@ -10,6 +10,7 @@ const AI_OVERVIEW_PATTERNS = [
   /AI-oversigt/i, // da
   /Vista creada con IA/i, // es
   /Přehled od AI/i, // cz
+  /Aperçu IA/i, // fr
 ];
 
 // Saving selector of AI overview to local storage
