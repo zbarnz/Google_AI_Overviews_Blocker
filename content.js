@@ -7,14 +7,21 @@ const AI_OVERVIEW_PATTERNS = [
   /Обзор от ИИ/, // ru
   /AI 摘要/, // zh-TW
   /AI-overzicht/i, // nl
+  /AI-oversigt/i, // da
   /Vista creada con IA/i, // es
   /Přehled od AI/i, // cz
 ];
 
+// Saving selector of AI overview to local storage
+const STORAGE_KEYS = {
+  SEARCH_RESULT: "aiOverviewSearchResultSelector",
+  ABOVE_RESULTS: "aiOverviewAboveResultsSelector",
+};
+
 // CSS selectors for AI overview containers
 const AI_OVERVIEW_SELECTORS = {
-  SEARCH_RESULT_SELECTOR: "div#rso > div", 
-  ABOVE_SEARCH_RESULTS_SELECTOR: "div#rcnt > div", 
+  SEARCH_RESULT_SELECTOR: "div#rso > div",
+  ABOVE_SEARCH_RESULTS_SELECTOR: "div#rcnt > div",
 };
 
 // Main DOM selectors
@@ -38,21 +45,52 @@ const TAB_PATTERNS = {
   AI_MODE: /^AI Mode$/i,
 };
 
+const saveSelector = (element, key) => {
+  console.log(element, "Saving selector for AI overview:", key);
+  if (element.id) {
+    localStorage.setItem(key, `#${element.id}`);
+  } else if (element.className) {
+    localStorage.setItem(
+      key,
+      `.${element.className.trim().split(/\s+/)[0]}`, //grabs the first class name
+    );
+  }
+};
+
 const getAiOverview = (mainBody) => {
+  if (!mainBody) return null;
+
+  // Check if we have a saved selector so we dont have to wait for generated AI box each time
+  for (const key of Object.values(STORAGE_KEYS)) {
+    const cachedSelector = localStorage.getItem(key);
+    if (cachedSelector) {
+      console.log("found cached selector for AI overview:", cachedSelector);
+      const cached = document.querySelector(cachedSelector);
+      if (cached) return cached;
+    }
+  }
+
   // Find all headings that match AI overview patterns
-  const aiTexts = [...mainBody?.querySelectorAll("h1, h2")].filter((e) =>
-    AI_OVERVIEW_PATTERNS.some((pattern) => pattern.test(e.innerText))
+  const aiTexts = [
+    ...mainBody.querySelectorAll("h1, h2, [role='heading']"),
+  ].filter((e) =>
+    AI_OVERVIEW_PATTERNS.some((pattern) => pattern.test(e.innerText)),
   );
 
   // For each matching heading, check both possible div containers
   for (const aiText of aiTexts) {
-    // Check AI overview as a search result
-    const aiOverviewAsResult = aiText?.closest(AI_OVERVIEW_SELECTORS.SEARCH_RESULT_SELECTOR);
-    if (aiOverviewAsResult) return aiOverviewAsResult;
-    
-    // Check AI overview above search results
-    const aiOverviewAbove = aiText?.closest(AI_OVERVIEW_SELECTORS.ABOVE_SEARCH_RESULTS_SELECTOR);
-    if (aiOverviewAbove) return aiOverviewAbove;
+    let el = aiText;
+    while (el && el.parentElement) {
+      if (el.parentElement.matches("#rcnt")) {
+        saveSelector(el, STORAGE_KEYS.ABOVE_RESULTS);
+        return el;
+      }
+      if (el.parentElement.parentElement?.matches("#rso")) {
+        saveSelector(el, STORAGE_KEYS.SEARCH_RESULT);
+        return el;
+      }
+      el = el.parentElement;
+    }
   }
 
   return null;
@@ -61,7 +99,7 @@ const getAiOverview = (mainBody) => {
 const observer = new MutationObserver(() => {
   // each time there's a mutation in the document see if there's an ai overview to hide
   const mainBody = document.querySelector(DOM_SELECTORS.MAIN_BODY);
-  
+
   const aiOverview = getAiOverview(mainBody);
 
   // Hide AI overview
@@ -81,20 +119,23 @@ const observer = new MutationObserver(() => {
   // Remove entries in "People also ask" section if it contains "AI overview"
   const peopleAlsoAskAiOverviews = [
     ...document.querySelectorAll(DOM_SELECTORS.PEOPLE_ALSO_ASK),
-  ].filter((el) => AI_OVERVIEW_PATTERNS.some((pattern) => pattern.test(el.innerHTML)));
+  ].filter((el) =>
+    AI_OVERVIEW_PATTERNS.some((pattern) => pattern.test(el.innerHTML)),
+  );
 
   peopleAlsoAskAiOverviews.forEach((el) => {
     el.parentElement.parentElement.style.display = CSS_VALUES.HIDDEN;
   });
 
   // Hide AI Mode tab
-  const tabsList = document.querySelector(DOM_SELECTORS.TABS_LIST).children;
-  const aiModeTab = tabsList[0];
+  const tabsList = document.querySelector(DOM_SELECTORS.TABS_LIST)?.children;
+  if (tabsList?.length) {
+    const aiModeTab = tabsList[0];
+    const text = aiModeTab.innerText.trim();
 
-  const text = aiModeTab.innerText.trim();
-
-  if (TAB_PATTERNS.AI_MODE.test(text)) {
-    aiModeTab.style.display = CSS_VALUES.HIDDEN;
+    if (TAB_PATTERNS.AI_MODE.test(text)) {
+      aiModeTab.style.display = CSS_VALUES.HIDDEN;
+    }
   }
 });
 
