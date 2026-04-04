@@ -61,15 +61,18 @@ const saveSelector = (element, key) => {
 const getAiOverview = (mainBody) => {
   if (!mainBody) return null;
 
+  // Temporarily disabled, selectors included valid header search results
+  // such as maps and travel information
+
   // Check if we have a saved selector so we dont have to wait for generated AI box each time
-  for (const key of Object.values(STORAGE_KEYS)) {
-    const cachedSelector = localStorage.getItem(key);
-    if (cachedSelector) {
-      console.log("found cached selector for AI overview:", cachedSelector);
-      const cached = document.querySelector(cachedSelector);
-      if (cached) return cached;
-    }
-  }
+  // for (const key of Object.values(STORAGE_KEYS)) {
+  //   const cachedSelector = localStorage.getItem(key);
+  //   if (cachedSelector) {
+  //     console.log("found cached selector for AI overview:", cachedSelector);
+  //     const cached = document.querySelector(cachedSelector);
+  //     if (cached) return cached;
+  //   }
+  // }
 
   // Find all headings that match AI overview patterns
   const aiTexts = [
