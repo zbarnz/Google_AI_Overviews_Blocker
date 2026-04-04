@@ -47,7 +47,6 @@ const TAB_PATTERNS = {
 };
 
 const saveSelector = (element, key) => {
-  console.log(element, "Saving selector for AI overview:", key);
   if (element.id) {
     localStorage.setItem(key, `#${element.id}`);
   } else if (element.className) {
@@ -68,7 +67,6 @@ const getAiOverview = (mainBody) => {
   // for (const key of Object.values(STORAGE_KEYS)) {
   //   const cachedSelector = localStorage.getItem(key);
   //   if (cachedSelector) {
-  //     console.log("found cached selector for AI overview:", cachedSelector);
   //     const cached = document.querySelector(cachedSelector);
   //     if (cached) return cached;
   //   }
