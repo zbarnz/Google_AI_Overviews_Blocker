@@ -27,7 +27,7 @@ Google AI Overviews Blocker is a browser extension that enhances user experience
 ### Manual Installation (Chrome)
 
 1. Download the latest version of the extension from the [GitHub Releases](https://github.com/zbarnz/Google_AI_Overviews_Blocker/releases/tag/PublishedVersion) page.
-2. Unzip the downloaded file to a desired location on your computer.
+2. Unzip the downloaded folder to a desired location on your computer.
 3. Open Chrome and go to `chrome://extensions/`.
 4. Enable Developer Mode by toggling the switch at the top-right corner.
 5. Click 'Load unpacked' and select the directory where you unzipped the extension files.
