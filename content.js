@@ -13,12 +13,6 @@ const AI_OVERVIEW_PATTERNS = [
   /Aperçu IA/i, // fr
 ];
 
-// Saving selector of AI overview to local storage
-const STORAGE_KEYS = {
-  SEARCH_RESULT: "aiOverviewSearchResultSelector",
-  ABOVE_RESULTS: "aiOverviewAboveResultsSelector",
-};
-
 // CSS selectors for AI overview containers
 const AI_OVERVIEW_SELECTORS = {
   SEARCH_RESULT_SELECTOR: "div#rso > div",
@@ -46,56 +40,83 @@ const TAB_PATTERNS = {
   AI_MODE: /^AI Mode$/i,
 };
 
-const saveSelector = (element, key) => {
-  if (element.id) {
-    localStorage.setItem(key, `#${element.id}`);
-  } else if (element.className) {
-    localStorage.setItem(
-      key,
-      `.${element.className.trim().split(/\s+/)[0]}`, //grabs the first class name
-    );
+// For each matching heading, check both possible div containers
+function getAiContainerParent(startEl) {
+  let el = startEl;
+
+  while (el && el.parentElement) {
+    const parent = el.parentElement;
+
+    if (parent.id === "rso") {
+      //search results container
+      return el;
+    }
+
+    if (parent.id === "rcnt") {
+      //traditional banner container
+      return el;
+    }
+
+    el = parent;
   }
-};
+
+  return startEl;
+}
 
 const getAiOverview = (mainBody) => {
   if (!mainBody) return null;
 
-  // Temporarily disabled, selectors included valid header search results
-  // such as maps and travel information
+  const inner =
+    mainBody.querySelector('[data-async-type="folsrch"]') ||
+    mainBody.querySelector('[id^="folsrch"]');
 
-  // Check if we have a saved selector so we dont have to wait for generated AI box each time
-  // for (const key of Object.values(STORAGE_KEYS)) {
-  //   const cachedSelector = localStorage.getItem(key);
-  //   if (cachedSelector) {
-  //     const cached = document.querySelector(cachedSelector);
-  //     if (cached) return cached;
-  //   }
-  // }
+  if (inner) {
+    const block = getAiContainerParent(inner);
+    if (block) {
+      return block;
+    }
+  }
 
-  // Find all headings that match AI overview patterns
+  // Specific AI overview language based fallback
   const aiTexts = [
     ...mainBody.querySelectorAll("h1, h2, [role='heading']"),
   ].filter((e) =>
     AI_OVERVIEW_PATTERNS.some((pattern) => pattern.test(e.innerText)),
   );
 
-  // For each matching heading, check both possible div containers
   for (const aiText of aiTexts) {
-    let el = aiText;
-    while (el && el.parentElement) {
-      if (el.parentElement.matches("#rcnt")) {
-        saveSelector(el, STORAGE_KEYS.ABOVE_RESULTS);
-        return el;
-      }
-      if (el.parentElement.parentElement?.matches("#rso")) {
-        saveSelector(el, STORAGE_KEYS.SEARCH_RESULT);
-        return el;
-      }
-      el = el.parentElement;
+    const block = getAiContainerParent(aiText);
+    if (block) {
+      return block;
     }
   }
 
   return null;
+};
+
+const isAiOverviewPaaTab = (el) => {
+  if (!el) return false;
+
+  if (!el || !el.matches("div.related-question-pair")) return false;
+
+  //pre-hydration tag on AI tabs
+  if (el.querySelector("[data-evn]")) return true;
+
+  //Post hydration AI tags:
+  if (el.querySelector('[data-subtree~="aimc"], [data-subtree="aimc"]')) {
+    return true;
+  }
+
+  if (el.querySelector('[data-subtree="aimfl,mfl"], [data-subtree="aimfl"]')) {
+    return true;
+  }
+
+  // Last-resort fallback once text has rendered
+  if (AI_OVERVIEW_PATTERNS.some((pattern) => pattern.test(el.innerText))) {
+    return true;
+  }
+
+  return false;
 };
 
 const observer = new MutationObserver(() => {
@@ -121,9 +142,7 @@ const observer = new MutationObserver(() => {
   // Remove entries in "People also ask" section if it contains "AI overview"
   const peopleAlsoAskAiOverviews = [
     ...document.querySelectorAll(DOM_SELECTORS.PEOPLE_ALSO_ASK),
-  ].filter((el) =>
-    AI_OVERVIEW_PATTERNS.some((pattern) => pattern.test(el.innerHTML)),
-  );
+  ].filter(isAiOverviewPaaTab);
 
   peopleAlsoAskAiOverviews.forEach((el) => {
     el.parentElement.parentElement.style.display = CSS_VALUES.HIDDEN;
