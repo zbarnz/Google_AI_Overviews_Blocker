@@ -22,6 +22,7 @@ const AI_OVERVIEW_SELECTORS = {
 // Main DOM selectors
 const DOM_SELECTORS = {
   MAIN_BODY: "div#rcnt",
+  MAIN_BODY_MOBILE: "div#center_col",
   HEADER_TABS: "div#hdtb-sc > div",
   MAIN_ELEMENT: '[role="main"]',
   PEOPLE_ALSO_ASK: "div.related-question-pair",
@@ -121,7 +122,9 @@ const isAiOverviewPaaTab = (el) => {
 
 const observer = new MutationObserver(() => {
   // each time there's a mutation in the document see if there's an ai overview to hide
-  const mainBody = document.querySelector(DOM_SELECTORS.MAIN_BODY);
+  const mainBody =
+    document.querySelector(DOM_SELECTORS.MAIN_BODY) ||
+    document.querySelector(DOM_SELECTORS.MAIN_BODY_MOBILE);
 
   const aiOverview = getAiOverview(mainBody);
 
