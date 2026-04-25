@@ -27,6 +27,7 @@ const DOM_SELECTORS = {
   MAIN_ELEMENT: '[role="main"]',
   PEOPLE_ALSO_ASK: "div.related-question-pair",
   TABS_LIST: '[role="list"]',
+  THINGS_TO_KNOW: "[data-maindata]",
 };
 
 // CSS values
@@ -64,6 +65,20 @@ function getAiContainerParent(startEl) {
   return startEl;
 }
 
+function getThingsToKnowContainer(startEl) {
+  let el = startEl;
+
+  while (el && el.parentElement) {
+    const parent = el.parentElement;
+
+    if (parent.parentElement?.id === "rso") {
+      return el;
+    }
+
+    el = parent;
+  }
+}
+
 const getAiOverview = (mainBody) => {
   if (!mainBody) return null;
 
@@ -79,20 +94,30 @@ const getAiOverview = (mainBody) => {
   }
 
   // Specific AI overview language based fallback
-  const aiTexts = [
-    ...mainBody.querySelectorAll("h1, h2, [role='heading']"),
-  ].filter((e) =>
-    AI_OVERVIEW_PATTERNS.some((pattern) => pattern.test(e.innerText)),
-  );
+  // const aiTexts = [
+  //   ...mainBody.querySelectorAll("h1, h2, [role='heading']"),
+  // ].filter((e) =>
+  //   AI_OVERVIEW_PATTERNS.some((pattern) => pattern.test(e.innerText)),
+  // );
 
-  for (const aiText of aiTexts) {
-    const block = getAiContainerParent(aiText);
+  // for (const aiText of aiTexts) {
+  //   const block = getAiContainerParent(aiText);
+  //   if (block) {
+  //     return block;
+  //   }
+  // }
+
+  return null;
+};
+
+const getThingsToKnow = () => {
+  const thingsToKnow = document.querySelectorAll(DOM_SELECTORS.THINGS_TO_KNOW);
+  for (const el of thingsToKnow) {
+    const block = getThingsToKnowContainer(el);
     if (block) {
       return block;
     }
   }
-
-  return null;
 };
 
 const isAiOverviewPaaTab = (el) => {
@@ -150,6 +175,12 @@ const observer = new MutationObserver(() => {
   peopleAlsoAskAiOverviews.forEach((el) => {
     el.parentElement.parentElement.style.display = CSS_VALUES.HIDDEN;
   });
+
+  // Hide Things to Know
+  const thingsToKnow = getThingsToKnow();
+  if (thingsToKnow) {
+    thingsToKnow.style.display = CSS_VALUES.HIDDEN;
+  }
 
   // Hide AI Mode tab
   const tabsList = document.querySelector(DOM_SELECTORS.TABS_LIST)?.children;
