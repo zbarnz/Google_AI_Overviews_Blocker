@@ -111,7 +111,7 @@ const getAiOverview = (mainBody) => {
 };
 
 const getThingsToKnow = () => {
-  const thingsToKnow = document.querySelectorAll(DOM_SELECTORS.THINGS_TO_KNOW);
+  const thingsToKnow = document.querySelectorAll('[data-maindata]:not([data-bkt])'); //TODO find a more reliable selector to hide things to know. This is at risk of hiding other non-AI features
   for (const el of thingsToKnow) {
     const block = getThingsToKnowContainer(el);
     if (block) {
@@ -172,9 +172,9 @@ const observer = new MutationObserver(() => {
     ...document.querySelectorAll(DOM_SELECTORS.PEOPLE_ALSO_ASK),
   ].filter(isAiOverviewPaaTab);
 
-  peopleAlsoAskAiOverviews.forEach((el) => {
-    el.parentElement.parentElement.style.display = CSS_VALUES.HIDDEN;
-  });
+  // peopleAlsoAskAiOverviews.forEach((el) => {
+  //   el.parentElement.parentElement.style.display = CSS_VALUES.HIDDEN;
+  // });
 
   // Hide Things to Know
   const thingsToKnow = getThingsToKnow();
