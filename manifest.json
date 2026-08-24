@@ -9,6 +9,14 @@
     "48": "icons/strikeAI48.png",
     "128": "icons/strikeAI128.png"
   },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/strikeAI16.png",
+      "48": "icons/strikeAI48.png",
+      "128": "icons/strikeAI128.png"
+    }
+  },
   "host_permissions": [
     "*://*.google.com/search*",
     "*://*.google.ad/search*",

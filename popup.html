@@ -1,0 +1,50 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Hide Google AI Overviews</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        width: 220px;
+        margin: 0;
+        padding: 12px;
+      }
+
+      h1 {
+        font-size: 14px;
+        margin: 0 0 8px;
+      }
+
+      label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 0;
+        font-size: 13px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Hide Google AI Overviews</h1>
+
+    <label>
+      <input type="checkbox" data-toggle="hideAiOverview" />
+      AI Overview
+    </label>
+    <label>
+      <input type="checkbox" data-toggle="hideAiModeTab" />
+      AI Mode Tab
+    </label>
+    <label>
+      <input type="checkbox" data-toggle="hidePaaAiEntries" />
+      People Also Ask (AI entries)
+    </label>
+    <label>
+      <input type="checkbox" data-toggle="hideThingsToKnow" />
+      Things to Know
+    </label>
+
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>
