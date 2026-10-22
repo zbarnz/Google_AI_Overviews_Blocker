@@ -25,7 +25,6 @@ const DOM_SELECTORS = {
   MAIN_BODY_MOBILE: "div#center_col",
   HEADER_TABS: "div#hdtb-sc > div",
   MAIN_ELEMENT: '[role="main"]',
-  PEOPLE_ALSO_ASK: "div.related-question-pair",
   TABS_LIST: '[role="list"]',
   THINGS_TO_KNOW: "[data-maindata]",
 };
@@ -37,10 +36,36 @@ const CSS_VALUES = {
   MAIN_MARGIN: "24px",
 };
 
+// "People also ask" detection. Every PAA answer is now an AI Overview, so the
+// whole section is hidden. Google's class names change often, so questions are
+// found by any of several independent signals rather than one selector.
+const PAA_SELECTORS = {
+  // Class Google has used on PAA questions for years
+  QUESTION: "div.related-question-pair",
+  // Generic accordion toggle; a PAA question is one whose label is a question
+  TOGGLE:
+    '[role="button"][aria-expanded][aria-controls], button[aria-expanded][aria-controls]',
+  // Containers the section must never be widened past
+  LANDMARK: '#rso, #rcnt, #center_col, #search, [role="main"], body',
+  HIDDEN_ATTR: "data-aiob-paa-hidden",
+};
+const QUESTION_PATTERN = /[?？؟]$/;
+// Siblings with less visible text than this (and no links) are section chrome,
+// e.g. the "People also ask" heading or the "Feedback" footer
+const PAA_CHROME_MAX_TEXT = 60;
+
 // Tab patterns
 const TAB_PATTERNS = {
   AI_MODE: /^AI Mode$/i,
 };
+
+// AI Mode is the udm=50 search vertical in every language, so its tab is found
+// by link target rather than by label or position
+const AI_MODE_SELECTORS = {
+  LINK: 'a[href*="udm="]',
+  TAB: '[role="listitem"]',
+};
+const AI_MODE_UDM = "50";
 
 // For each matching heading, check both possible div containers
 function getAiContainerParent(startEl) {
@@ -120,29 +145,85 @@ const getThingsToKnow = () => {
   }
 };
 
-const isAiOverviewPaaTab = (el) => {
-  if (!el) return false;
+const getPaaQuestions = (root) => {
+  const found = new Set(root.querySelectorAll(PAA_SELECTORS.QUESTION));
 
-  if (!el || !el.matches("div.related-question-pair")) return false;
-
-  //pre-hydration tag on AI tabs
-  if (el.querySelector("[data-evn]")) return true;
-
-  //Post hydration AI tags:
-  if (el.querySelector('[data-subtree~="aimc"], [data-subtree="aimc"]')) {
-    return true;
+  for (const toggle of root.querySelectorAll(PAA_SELECTORS.TOGGLE)) {
+    if (QUESTION_PATTERN.test(toggle.textContent.trim())) found.add(toggle);
   }
 
-  if (el.querySelector('[data-subtree="aimfl,mfl"], [data-subtree="aimfl"]')) {
-    return true;
+  // A toggle inside a .related-question-pair is the same question twice; keep
+  // the outermost element, and skip sections that are already hidden
+  return [...found].filter(
+    (el) =>
+      !el.closest(`[${PAA_SELECTORS.HIDDEN_ATTR}]`) &&
+      ![...found].some((other) => other !== el && other.contains(el)),
+  );
+};
+
+const isPaaChrome = (el) =>
+  el.innerText.trim().length <= PAA_CHROME_MAX_TEXT &&
+  ![...el.querySelectorAll("a[href]")].some((a) => a.getClientRects().length);
+
+// Widen from the question list to the wrapper that also holds the heading and
+// footer, stopping before anything that holds other search results
+function getPaaSectionContainer(list) {
+  let el = list;
+
+  while (el.parentElement && !el.parentElement.matches(PAA_SELECTORS.LANDMARK)) {
+    const parent = el.parentElement;
+    const others = [...parent.children].filter((child) => child !== el);
+    if (!others.every(isPaaChrome)) break;
+    el = parent;
   }
 
-  // Last-resort fallback once text has rendered
-  if (AI_OVERVIEW_PATTERNS.some((pattern) => pattern.test(el.innerText))) {
-    return true;
+  return el;
+}
+
+// Returns the outer container of each "People also ask" section on the page.
+// A section needs at least two questions so a lone accordion is never hidden.
+const getPeopleAlsoAskSections = (root) => {
+  if (!root) return [];
+
+  const questions = getPaaQuestions(root);
+  const sections = new Set();
+
+  for (const question of questions) {
+    let list = question.parentElement;
+    while (list && list !== root) {
+      if (questions.filter((q) => q !== question && list.contains(q)).length) {
+        sections.add(getPaaSectionContainer(list));
+        break;
+      }
+      list = list.parentElement;
+    }
   }
 
-  return false;
+  return [...sections];
+};
+
+const isAiModeLink = (link) => {
+  try {
+    return new URL(link.href).searchParams.get("udm") === AI_MODE_UDM;
+  } catch {
+    return false;
+  }
+};
+
+const getAiModeTabs = () => {
+  const tabs = new Set();
+
+  for (const link of document.querySelectorAll(AI_MODE_SELECTORS.LINK)) {
+    if (isAiModeLink(link)) tabs.add(link.closest(AI_MODE_SELECTORS.TAB) || link);
+  }
+
+  // English label fallback in case the link target changes
+  const tabsList = document.querySelector(DOM_SELECTORS.TABS_LIST)?.children;
+  for (const tab of tabsList || []) {
+    if (TAB_PATTERNS.AI_MODE.test(tab.innerText.trim())) tabs.add(tab);
+  }
+
+  return [...tabs];
 };
 
 const observer = new MutationObserver(() => {
@@ -167,14 +248,11 @@ const observer = new MutationObserver(() => {
     mainElement.style.marginTop = CSS_VALUES.MAIN_MARGIN;
   }
 
-  // Remove entries in "People also ask" section if it contains "AI overview"
-  const peopleAlsoAskAiOverviews = [
-    ...document.querySelectorAll(DOM_SELECTORS.PEOPLE_ALSO_ASK),
-  ].filter(isAiOverviewPaaTab);
-
-  // peopleAlsoAskAiOverviews.forEach((el) => {
-  //   el.parentElement.parentElement.style.display = CSS_VALUES.HIDDEN;
-  // });
+  // Hide "People also ask"; its answers are AI Overviews
+  getPeopleAlsoAskSections(mainBody).forEach((el) => {
+    el.style.display = CSS_VALUES.HIDDEN;
+    el.setAttribute(PAA_SELECTORS.HIDDEN_ATTR, "");
+  });
 
   // Hide Things to Know
   const thingsToKnow = getThingsToKnow();
@@ -183,15 +261,9 @@ const observer = new MutationObserver(() => {
   }
 
   // Hide AI Mode tab
-  const tabsList = document.querySelector(DOM_SELECTORS.TABS_LIST)?.children;
-  if (tabsList?.length) {
-    const aiModeTab = tabsList[0];
-    const text = aiModeTab.innerText.trim();
-
-    if (TAB_PATTERNS.AI_MODE.test(text)) {
-      aiModeTab.style.display = CSS_VALUES.HIDDEN;
-    }
-  }
+  getAiModeTabs().forEach((tab) => {
+    tab.style.display = CSS_VALUES.HIDDEN;
+  });
 });
 
 observer.observe(document, {
