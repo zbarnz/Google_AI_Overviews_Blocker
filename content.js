@@ -27,14 +27,10 @@ const DOM_SELECTORS = {
   MAIN_ELEMENT: '[role="main"]',
   PEOPLE_ALSO_ASK: "div.related-question-pair",
   TABS_LIST: '[role="list"]',
-  THINGS_TO_KNOW: "[data-maindata]",
+  // Every Things to Know section has a title, but only non-AI sections have content
+  THINGS_TO_KNOW_TITLE: '[data-attrid^="lab/title/"], [data-attrid^="lab/cluster/title/"]',
+  THINGS_TO_KNOW_CONTENT: '[data-attrid^="lab/content/"], [data-attrid^="lab/cluster/content/"]',
 };
-
-// Non-AI widgets that should not be hidden
-const PROTECTED_WIDGET_SELECTORS = [
-  '[id^="knowledge-verticals-internetspeedtest"]', // speed test
-  '[id^="knowledge-currency"]', // currency converter
-];
 
 // CSS values
 const CSS_VALUES = {
@@ -85,23 +81,6 @@ function getThingsToKnowContainer(startEl) {
   }
 }
 
-const containsProtectedWidget = (el) =>
-  !!el &&
-  PROTECTED_WIDGET_SELECTORS.some((sel) => el.matches(sel) || el.querySelector(sel));
-
-// Hide the block, or the part of it containing origin if it also holds a protected widget
-const hideSafely = (block, origin) => {
-  if (!block || !origin) return;
-
-  let el = block;
-  while (el && containsProtectedWidget(el)) {
-    if (el === origin) return;
-    el = [...el.children].find((child) => child.contains(origin));
-  }
-
-  if (el) el.style.display = CSS_VALUES.HIDDEN;
-};
-
 const getAiOverview = (mainBody) => {
   if (!mainBody) return null;
 
@@ -112,7 +91,7 @@ const getAiOverview = (mainBody) => {
   if (inner) {
     const block = getAiContainerParent(inner);
     if (block) {
-      return { block, origin: inner };
+      return block;
     }
   }
 
@@ -134,14 +113,42 @@ const getAiOverview = (mainBody) => {
 };
 
 const getThingsToKnow = () => {
-  const thingsToKnow = document.querySelectorAll('[data-maindata]:not([data-bkt])'); //TODO find a more reliable selector to hide things to know. This is at risk of hiding other non-AI features
+  const thingsToKnow = document.querySelectorAll(DOM_SELECTORS.THINGS_TO_KNOW_TITLE);
   for (const el of thingsToKnow) {
     const block = getThingsToKnowContainer(el);
-    // Skip blocks holding a protected widget, e.g. the speed test's feedback element also has data-maindata
-    if (block && !containsProtectedWidget(block)) {
+    if (block) {
       return block;
     }
   }
+};
+
+// Each section is the child of the closest element holding every section title
+const getThingsToKnowSections = (titles) => {
+  let list = titles[0].parentElement;
+  while (!titles.every((title) => list.contains(title))) {
+    list = list.parentElement;
+  }
+  return titles.map((title) => [...list.children].find((child) => child.contains(title)));
+};
+
+// Hide the AI sections, or the whole block (header included) if every section is AI
+const hideThingsToKnow = (block) => {
+  const titles = [...block.querySelectorAll(DOM_SELECTORS.THINGS_TO_KNOW_TITLE)];
+  const sections = titles.length > 1 ? getThingsToKnowSections(titles) : [block];
+  const aiSections = sections.filter(
+    (section) => !section.querySelector(DOM_SELECTORS.THINGS_TO_KNOW_CONTENT),
+  );
+
+  if (aiSections.length === sections.length) {
+    block.style.display = CSS_VALUES.HIDDEN;
+    return;
+  }
+
+  // Re-run on every mutation, so anything hidden before its content loaded is shown again
+  block.style.display = "";
+  sections.forEach((section) => {
+    section.style.display = aiSections.includes(section) ? CSS_VALUES.HIDDEN : "";
+  });
 };
 
 const isAiOverviewPaaTab = (el) => {
@@ -178,7 +185,7 @@ const observer = new MutationObserver(() => {
   const aiOverview = getAiOverview(mainBody);
 
   // Hide AI overview
-  if (aiOverview) hideSafely(aiOverview.block, aiOverview.origin);
+  if (aiOverview) aiOverview.style.display = CSS_VALUES.HIDDEN;
 
   // Restore padding after header tabs
   const headerTabs = document.querySelector(DOM_SELECTORS.HEADER_TABS);
@@ -202,7 +209,7 @@ const observer = new MutationObserver(() => {
 
   // Hide Things to Know
   const thingsToKnow = getThingsToKnow();
-  if (thingsToKnow) thingsToKnow.style.display = CSS_VALUES.HIDDEN;
+  if (thingsToKnow) hideThingsToKnow(thingsToKnow);
 
   // Hide AI Mode tab
   const tabsList = document.querySelector(DOM_SELECTORS.TABS_LIST)?.children;
