@@ -33,6 +33,7 @@ const DOM_SELECTORS = {
 // Non-AI widgets that should not be hidden
 const PROTECTED_WIDGET_SELECTORS = [
   '[id^="knowledge-verticals-internetspeedtest"]', // speed test
+  '[id^="knowledge-currency"]', // currency converter
 ];
 
 // CSS values
