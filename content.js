@@ -30,6 +30,12 @@ const DOM_SELECTORS = {
   THINGS_TO_KNOW: "[data-maindata]",
 };
 
+// Non-AI widgets that should not be hidden
+const PROTECTED_WIDGET_SELECTORS = [
+  '[id^="knowledge-verticals-internetspeedtest"]', // speed test
+  '[id^="knowledge-currency"]', // currency converter
+];
+
 // CSS values
 const CSS_VALUES = {
   HIDDEN: "none",
@@ -79,6 +85,23 @@ function getThingsToKnowContainer(startEl) {
   }
 }
 
+const containsProtectedWidget = (el) =>
+  !!el &&
+  PROTECTED_WIDGET_SELECTORS.some((sel) => el.matches(sel) || el.querySelector(sel));
+
+// Hide the block, or the part of it containing origin if it also holds a protected widget
+const hideSafely = (block, origin) => {
+  if (!block || !origin) return;
+
+  let el = block;
+  while (el && containsProtectedWidget(el)) {
+    if (el === origin) return;
+    el = [...el.children].find((child) => child.contains(origin));
+  }
+
+  if (el) el.style.display = CSS_VALUES.HIDDEN;
+};
+
 const getAiOverview = (mainBody) => {
   if (!mainBody) return null;
 
@@ -89,7 +112,7 @@ const getAiOverview = (mainBody) => {
   if (inner) {
     const block = getAiContainerParent(inner);
     if (block) {
-      return block;
+      return { block, origin: inner };
     }
   }
 
@@ -114,7 +137,8 @@ const getThingsToKnow = () => {
   const thingsToKnow = document.querySelectorAll('[data-maindata]:not([data-bkt])'); //TODO find a more reliable selector to hide things to know. This is at risk of hiding other non-AI features
   for (const el of thingsToKnow) {
     const block = getThingsToKnowContainer(el);
-    if (block) {
+    // Skip blocks holding a protected widget, e.g. the speed test's feedback element also has data-maindata
+    if (block && !containsProtectedWidget(block)) {
       return block;
     }
   }
@@ -154,7 +178,7 @@ const observer = new MutationObserver(() => {
   const aiOverview = getAiOverview(mainBody);
 
   // Hide AI overview
-  if (aiOverview) aiOverview.style.display = CSS_VALUES.HIDDEN;
+  if (aiOverview) hideSafely(aiOverview.block, aiOverview.origin);
 
   // Restore padding after header tabs
   const headerTabs = document.querySelector(DOM_SELECTORS.HEADER_TABS);
@@ -178,9 +202,7 @@ const observer = new MutationObserver(() => {
 
   // Hide Things to Know
   const thingsToKnow = getThingsToKnow();
-  if (thingsToKnow) {
-    thingsToKnow.style.display = CSS_VALUES.HIDDEN;
-  }
+  if (thingsToKnow) thingsToKnow.style.display = CSS_VALUES.HIDDEN;
 
   // Hide AI Mode tab
   const tabsList = document.querySelector(DOM_SELECTORS.TABS_LIST)?.children;
