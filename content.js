@@ -70,6 +70,13 @@ function getAiContainerParent(startEl) {
       return el;
     }
 
+    // Google sometimes wraps the AI overview together with the organic results,
+    // so stop below any parent that also holds a result title link
+    const holdsOtherResults = [...parent.children].some(
+      (child) => child !== el && child.querySelector("a[href] h3"),
+    );
+    if (holdsOtherResults) return el;
+
     el = parent;
   }
 
