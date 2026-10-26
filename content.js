@@ -121,6 +121,19 @@ const getAiOverview = (mainBody) => {
   return null;
 };
 
+// On some searches the AI Overview title sits in its own box above the results, apart from its body
+const getAiOverviewTitleBlocks = (mainBody) => {
+  if (!mainBody) return [];
+
+  return [...mainBody.querySelectorAll('[role="heading"]')]
+    .filter((heading) =>
+      AI_OVERVIEW_PATTERNS.some((pattern) => pattern.test(heading.textContent.trim())),
+    )
+    .map(getAiContainerParent)
+    // Only boxes above the results, never #rso or anything containing it
+    .filter((block) => block.parentElement?.id === "rcnt" && !block.querySelector("#rso"));
+};
+
 const getThingsToKnow = () => {
   const thingsToKnow = document.querySelectorAll(DOM_SELECTORS.THINGS_TO_KNOW_TITLE);
   for (const el of thingsToKnow) {
@@ -194,6 +207,9 @@ const observer = new MutationObserver(() => {
 
   // Hide AI overview
   if (aiOverview) aiOverview.style.display = CSS_VALUES.HIDDEN;
+  getAiOverviewTitleBlocks(mainBody).forEach((block) => {
+    block.style.display = CSS_VALUES.HIDDEN;
+  });
 
   // Restore padding after header tabs
   const headerTabs = document.querySelector(DOM_SELECTORS.HEADER_TABS);
