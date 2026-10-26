@@ -25,8 +25,9 @@ const DOM_SELECTORS = {
   MAIN_BODY_MOBILE: "div#center_col",
   HEADER_TABS: "div#hdtb-sc > div",
   MAIN_ELEMENT: '[role="main"]',
-  PEOPLE_ALSO_ASK: "div.related-question-pair",
   TABS_LIST: '[role="list"]',
+  // People Also Ask section (data-initq holds the search) and its questions
+  PEOPLE_ALSO_ASK: "[data-initq], div.related-question-pair",
   // Every Things to Know section has a title, but only non-AI sections have content
   THINGS_TO_KNOW_TITLE: '[data-attrid^="lab/title/"], [data-attrid^="lab/cluster/title/"]',
   THINGS_TO_KNOW_CONTENT: '[data-attrid^="lab/content/"], [data-attrid^="lab/cluster/content/"]',
@@ -43,6 +44,14 @@ const CSS_VALUES = {
 const TAB_PATTERNS = {
   AI_MODE: /^AI Mode$/i,
 };
+
+// AI Mode is the udm=50 search vertical in every language, so its tab is found
+// by link target rather than by label or position
+const AI_MODE_SELECTORS = {
+  LINK: 'a[href*="udm="]',
+  TAB: '[role="listitem"]',
+};
+const AI_MODE_UDM = "50";
 
 // For each matching heading, check both possible div containers
 function getAiContainerParent(startEl) {
@@ -67,7 +76,7 @@ function getAiContainerParent(startEl) {
   return startEl;
 }
 
-function getThingsToKnowContainer(startEl) {
+function getResultBlock(startEl) {
   let el = startEl;
 
   while (el && el.parentElement) {
@@ -115,7 +124,7 @@ const getAiOverview = (mainBody) => {
 const getThingsToKnow = () => {
   const thingsToKnow = document.querySelectorAll(DOM_SELECTORS.THINGS_TO_KNOW_TITLE);
   for (const el of thingsToKnow) {
-    const block = getThingsToKnowContainer(el);
+    const block = getResultBlock(el);
     if (block) {
       return block;
     }
@@ -151,29 +160,28 @@ const hideThingsToKnow = (block) => {
   });
 };
 
-const isAiOverviewPaaTab = (el) => {
-  if (!el) return false;
+const isAiModeLink = (link) => {
+  try {
+    return new URL(link.href).searchParams.get("udm") === AI_MODE_UDM;
+  } catch {
+    return false;
+  }
+};
 
-  if (!el || !el.matches("div.related-question-pair")) return false;
+const getAiModeTabs = () => {
+  const tabs = new Set();
 
-  //pre-hydration tag on AI tabs
-  if (el.querySelector("[data-evn]")) return true;
-
-  //Post hydration AI tags:
-  if (el.querySelector('[data-subtree~="aimc"], [data-subtree="aimc"]')) {
-    return true;
+  for (const link of document.querySelectorAll(AI_MODE_SELECTORS.LINK)) {
+    if (isAiModeLink(link)) tabs.add(link.closest(AI_MODE_SELECTORS.TAB) || link);
   }
 
-  if (el.querySelector('[data-subtree="aimfl,mfl"], [data-subtree="aimfl"]')) {
-    return true;
+  // English label fallback in case the link target changes
+  const tabsList = document.querySelector(DOM_SELECTORS.TABS_LIST)?.children;
+  for (const tab of tabsList || []) {
+    if (TAB_PATTERNS.AI_MODE.test(tab.innerText.trim())) tabs.add(tab);
   }
 
-  // Last-resort fallback once text has rendered
-  if (AI_OVERVIEW_PATTERNS.some((pattern) => pattern.test(el.innerText))) {
-    return true;
-  }
-
-  return false;
+  return [...tabs];
 };
 
 const observer = new MutationObserver(() => {
@@ -198,29 +206,19 @@ const observer = new MutationObserver(() => {
     mainElement.style.marginTop = CSS_VALUES.MAIN_MARGIN;
   }
 
-  // Remove entries in "People also ask" section if it contains "AI overview"
-  const peopleAlsoAskAiOverviews = [
-    ...document.querySelectorAll(DOM_SELECTORS.PEOPLE_ALSO_ASK),
-  ].filter(isAiOverviewPaaTab);
-
-  // peopleAlsoAskAiOverviews.forEach((el) => {
-  //   el.parentElement.parentElement.style.display = CSS_VALUES.HIDDEN;
-  // });
+  // Hide "People also ask"; its answers are AI Overviews
+  document.querySelectorAll(DOM_SELECTORS.PEOPLE_ALSO_ASK).forEach((el) => {
+    (getResultBlock(el) || el).style.display = CSS_VALUES.HIDDEN;
+  });
 
   // Hide Things to Know
   const thingsToKnow = getThingsToKnow();
   if (thingsToKnow) hideThingsToKnow(thingsToKnow);
 
   // Hide AI Mode tab
-  const tabsList = document.querySelector(DOM_SELECTORS.TABS_LIST)?.children;
-  if (tabsList?.length) {
-    const aiModeTab = tabsList[0];
-    const text = aiModeTab.innerText.trim();
-
-    if (TAB_PATTERNS.AI_MODE.test(text)) {
-      aiModeTab.style.display = CSS_VALUES.HIDDEN;
-    }
-  }
+  getAiModeTabs().forEach((tab) => {
+    tab.style.display = CSS_VALUES.HIDDEN;
+  });
 });
 
 observer.observe(document, {
