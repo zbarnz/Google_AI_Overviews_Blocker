@@ -26,7 +26,9 @@ const DOM_SELECTORS = {
   HEADER_TABS: "div#hdtb-sc > div",
   MAIN_ELEMENT: '[role="main"]',
   TABS_LIST: '[role="list"]',
-  THINGS_TO_KNOW: "[data-maindata]",
+  // Every Things to Know section has a title, but only non-AI sections have content
+  THINGS_TO_KNOW_TITLE: '[data-attrid^="lab/title/"], [data-attrid^="lab/cluster/title/"]',
+  THINGS_TO_KNOW_CONTENT: '[data-attrid^="lab/content/"], [data-attrid^="lab/cluster/content/"]',
 };
 
 // CSS values
@@ -136,13 +138,42 @@ const getAiOverview = (mainBody) => {
 };
 
 const getThingsToKnow = () => {
-  const thingsToKnow = document.querySelectorAll('[data-maindata]:not([data-bkt])'); //TODO find a more reliable selector to hide things to know. This is at risk of hiding other non-AI features
+  const thingsToKnow = document.querySelectorAll(DOM_SELECTORS.THINGS_TO_KNOW_TITLE);
   for (const el of thingsToKnow) {
     const block = getThingsToKnowContainer(el);
     if (block) {
       return block;
     }
   }
+};
+
+// Each section is the child of the closest element holding every section title
+const getThingsToKnowSections = (titles) => {
+  let list = titles[0].parentElement;
+  while (!titles.every((title) => list.contains(title))) {
+    list = list.parentElement;
+  }
+  return titles.map((title) => [...list.children].find((child) => child.contains(title)));
+};
+
+// Hide the AI sections, or the whole block (header included) if every section is AI
+const hideThingsToKnow = (block) => {
+  const titles = [...block.querySelectorAll(DOM_SELECTORS.THINGS_TO_KNOW_TITLE)];
+  const sections = titles.length > 1 ? getThingsToKnowSections(titles) : [block];
+  const aiSections = sections.filter(
+    (section) => !section.querySelector(DOM_SELECTORS.THINGS_TO_KNOW_CONTENT),
+  );
+
+  if (aiSections.length === sections.length) {
+    block.style.display = CSS_VALUES.HIDDEN;
+    return;
+  }
+
+  // Re-run on every mutation, so anything hidden before its content loaded is shown again
+  block.style.display = "";
+  sections.forEach((section) => {
+    section.style.display = aiSections.includes(section) ? CSS_VALUES.HIDDEN : "";
+  });
 };
 
 const getPaaQuestions = (root) => {
@@ -256,9 +287,7 @@ const observer = new MutationObserver(() => {
 
   // Hide Things to Know
   const thingsToKnow = getThingsToKnow();
-  if (thingsToKnow) {
-    thingsToKnow.style.display = CSS_VALUES.HIDDEN;
-  }
+  if (thingsToKnow) hideThingsToKnow(thingsToKnow);
 
   // Hide AI Mode tab
   getAiModeTabs().forEach((tab) => {
