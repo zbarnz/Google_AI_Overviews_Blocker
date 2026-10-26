@@ -136,8 +136,9 @@ const getThingsToKnow = () => {
   const thingsToKnow = document.querySelectorAll('[data-maindata]:not([data-bkt])'); //TODO find a more reliable selector to hide things to know. This is at risk of hiding other non-AI features
   for (const el of thingsToKnow) {
     const block = getThingsToKnowContainer(el);
-    if (block) {
-      return { block, origin: el };
+    // Skip blocks holding a protected widget, e.g. the speed test's feedback element also has data-maindata
+    if (block && !containsProtectedWidget(block)) {
+      return block;
     }
   }
 };
@@ -200,7 +201,7 @@ const observer = new MutationObserver(() => {
 
   // Hide Things to Know
   const thingsToKnow = getThingsToKnow();
-  if (thingsToKnow) hideSafely(thingsToKnow.block, thingsToKnow.origin);
+  if (thingsToKnow) thingsToKnow.style.display = CSS_VALUES.HIDDEN;
 
   // Hide AI Mode tab
   const tabsList = document.querySelector(DOM_SELECTORS.TABS_LIST)?.children;
