@@ -26,6 +26,8 @@ const DOM_SELECTORS = {
   HEADER_TABS: "div#hdtb-sc > div",
   MAIN_ELEMENT: '[role="main"]',
   TABS_LIST: '[role="list"]',
+  // People Also Ask section (data-initq holds the search) and its questions
+  PEOPLE_ALSO_ASK: "[data-initq], div.related-question-pair",
   // Every Things to Know section has a title, but only non-AI sections have content
   THINGS_TO_KNOW_TITLE: '[data-attrid^="lab/title/"], [data-attrid^="lab/cluster/title/"]',
   THINGS_TO_KNOW_CONTENT: '[data-attrid^="lab/content/"], [data-attrid^="lab/cluster/content/"]',
@@ -37,24 +39,6 @@ const CSS_VALUES = {
   HEADER_PADDING: "12px",
   MAIN_MARGIN: "24px",
 };
-
-// "People also ask" detection. Every PAA answer is now an AI Overview, so the
-// whole section is hidden. Google's class names change often, so questions are
-// found by any of several independent signals rather than one selector.
-const PAA_SELECTORS = {
-  // Class Google has used on PAA questions for years
-  QUESTION: "div.related-question-pair",
-  // Generic accordion toggle; a PAA question is one whose label is a question
-  TOGGLE:
-    '[role="button"][aria-expanded][aria-controls], button[aria-expanded][aria-controls]',
-  // Containers the section must never be widened past
-  LANDMARK: '#rso, #rcnt, #center_col, #search, [role="main"], body',
-  HIDDEN_ATTR: "data-aiob-paa-hidden",
-};
-const QUESTION_PATTERN = /[?？؟]$/;
-// Siblings with less visible text than this (and no links) are section chrome,
-// e.g. the "People also ask" heading or the "Feedback" footer
-const PAA_CHROME_MAX_TEXT = 60;
 
 // Tab patterns
 const TAB_PATTERNS = {
@@ -92,7 +76,7 @@ function getAiContainerParent(startEl) {
   return startEl;
 }
 
-function getThingsToKnowContainer(startEl) {
+function getResultBlock(startEl) {
   let el = startEl;
 
   while (el && el.parentElement) {
@@ -140,7 +124,7 @@ const getAiOverview = (mainBody) => {
 const getThingsToKnow = () => {
   const thingsToKnow = document.querySelectorAll(DOM_SELECTORS.THINGS_TO_KNOW_TITLE);
   for (const el of thingsToKnow) {
-    const block = getThingsToKnowContainer(el);
+    const block = getResultBlock(el);
     if (block) {
       return block;
     }
@@ -174,63 +158,6 @@ const hideThingsToKnow = (block) => {
   sections.forEach((section) => {
     section.style.display = aiSections.includes(section) ? CSS_VALUES.HIDDEN : "";
   });
-};
-
-const getPaaQuestions = (root) => {
-  const found = new Set(root.querySelectorAll(PAA_SELECTORS.QUESTION));
-
-  for (const toggle of root.querySelectorAll(PAA_SELECTORS.TOGGLE)) {
-    if (QUESTION_PATTERN.test(toggle.textContent.trim())) found.add(toggle);
-  }
-
-  // A toggle inside a .related-question-pair is the same question twice; keep
-  // the outermost element, and skip sections that are already hidden
-  return [...found].filter(
-    (el) =>
-      !el.closest(`[${PAA_SELECTORS.HIDDEN_ATTR}]`) &&
-      ![...found].some((other) => other !== el && other.contains(el)),
-  );
-};
-
-const isPaaChrome = (el) =>
-  el.innerText.trim().length <= PAA_CHROME_MAX_TEXT &&
-  ![...el.querySelectorAll("a[href]")].some((a) => a.getClientRects().length);
-
-// Widen from the question list to the wrapper that also holds the heading and
-// footer, stopping before anything that holds other search results
-function getPaaSectionContainer(list) {
-  let el = list;
-
-  while (el.parentElement && !el.parentElement.matches(PAA_SELECTORS.LANDMARK)) {
-    const parent = el.parentElement;
-    const others = [...parent.children].filter((child) => child !== el);
-    if (!others.every(isPaaChrome)) break;
-    el = parent;
-  }
-
-  return el;
-}
-
-// Returns the outer container of each "People also ask" section on the page.
-// A section needs at least two questions so a lone accordion is never hidden.
-const getPeopleAlsoAskSections = (root) => {
-  if (!root) return [];
-
-  const questions = getPaaQuestions(root);
-  const sections = new Set();
-
-  for (const question of questions) {
-    let list = question.parentElement;
-    while (list && list !== root) {
-      if (questions.filter((q) => q !== question && list.contains(q)).length) {
-        sections.add(getPaaSectionContainer(list));
-        break;
-      }
-      list = list.parentElement;
-    }
-  }
-
-  return [...sections];
 };
 
 const isAiModeLink = (link) => {
@@ -280,9 +207,8 @@ const observer = new MutationObserver(() => {
   }
 
   // Hide "People also ask"; its answers are AI Overviews
-  getPeopleAlsoAskSections(mainBody).forEach((el) => {
-    el.style.display = CSS_VALUES.HIDDEN;
-    el.setAttribute(PAA_SELECTORS.HIDDEN_ATTR, "");
+  document.querySelectorAll(DOM_SELECTORS.PEOPLE_ALSO_ASK).forEach((el) => {
+    (getResultBlock(el) || el).style.display = CSS_VALUES.HIDDEN;
   });
 
   // Hide Things to Know
