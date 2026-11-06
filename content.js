@@ -23,8 +23,6 @@ const AI_OVERVIEW_SELECTORS = {
 const DOM_SELECTORS = {
   MAIN_BODY: "div#rcnt",
   MAIN_BODY_MOBILE: "div#center_col",
-  HEADER_TABS: "div#hdtb-sc > div",
-  MAIN_ELEMENT: '[role="main"]',
   TABS_LIST: '[role="list"]',
   // People Also Ask section (data-initq holds the search) and its questions
   PEOPLE_ALSO_ASK: "[data-initq], div.related-question-pair",
@@ -36,8 +34,6 @@ const DOM_SELECTORS = {
 // CSS values
 const CSS_VALUES = {
   HIDDEN: "none",
-  HEADER_PADDING: "12px",
-  MAIN_MARGIN: "24px",
 };
 
 // Tab patterns
@@ -218,16 +214,8 @@ const observer = new MutationObserver(() => {
     block.style.display = CSS_VALUES.HIDDEN;
   });
 
-  // Restore padding after header tabs
-  const headerTabs = document.querySelector(DOM_SELECTORS.HEADER_TABS);
-  if (headerTabs) headerTabs.style.paddingBottom = CSS_VALUES.HEADER_PADDING;
-
-  // For debugging
-  // console.log([...mainBody?.querySelectorAll('h1, h2')].map(e => { return { text: e.innerText, obj: e }}));
-  const mainElement = document.querySelector(DOM_SELECTORS.MAIN_ELEMENT);
-  if (mainElement) {
-    mainElement.style.marginTop = CSS_VALUES.MAIN_MARGIN;
-  }
+  // No spacing overrides: Google already spaces the results correctly without the
+  // AI overview, and a margin on [role="main"] (#center_col) left a gap above them
 
   // Hide "People also ask"; its answers are AI Overviews
   document.querySelectorAll(DOM_SELECTORS.PEOPLE_ALSO_ASK).forEach((el) => {
