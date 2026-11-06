@@ -26,6 +26,10 @@ const DOM_SELECTORS = {
   HEADER_TABS: "div#hdtb-sc > div",
   MAIN_ELEMENT: '[role="main"]',
   TABS_LIST: '[role="list"]',
+  // Result title links, and anything inside the spelling correction box ("Did you mean",
+  // "These are results for"). The box (#oFNiHe) is on every page but empty unless Google
+  // shows a correction
+  NON_AI_CONTENT: 'a[href] h3, #oFNiHe *',
   // People Also Ask section (data-initq holds the search) and its questions
   PEOPLE_ALSO_ASK: "[data-initq], div.related-question-pair",
   // Every Things to Know section has a title, but only non-AI sections have content
@@ -70,12 +74,16 @@ function getAiContainerParent(startEl) {
       return el;
     }
 
-    // Google sometimes wraps the AI overview together with the organic results,
-    // so stop below any parent that also holds a result title link
-    const holdsOtherResults = [...parent.children].some(
-      (child) => child !== el && child.querySelector("a[href] h3"),
+    // Google sometimes wraps the AI overview together with non-AI content (organic
+    // results, the "Did you mean" spelling correction), so stop below any parent
+    // that also holds some
+    const holdsNonAiContent = [...parent.children].some(
+      (child) =>
+        child !== el &&
+        (child.matches(DOM_SELECTORS.NON_AI_CONTENT) ||
+          child.querySelector(DOM_SELECTORS.NON_AI_CONTENT)),
     );
-    if (holdsOtherResults) return el;
+    if (holdsNonAiContent) return el;
 
     el = parent;
   }
