@@ -40,6 +40,9 @@ const CSS_VALUES = {
   MAIN_MARGIN: "24px",
 };
 
+// Marks AI blocks hidden by this extension so they can be shown again
+const HIDDEN_ATTR = "data-aiob-hidden";
+
 // Tab patterns
 const TAB_PATTERNS = {
   AI_MODE: /^AI Mode$/i,
@@ -141,6 +144,22 @@ const getAiOverviewTitleBlocks = (mainBody) => {
     .filter((block) => block.parentElement?.id === "rcnt" && !block.querySelector("#rso"));
 };
 
+const hideAiBlock = (el) => {
+  el.style.display = CSS_VALUES.HIDDEN;
+  el.setAttribute(HIDDEN_ATTR, "");
+};
+
+// The page loads in pieces, so a block hidden before the results arrived
+// may turn out to wrap them; show it again and let this pass pick a smaller block
+const restoreBlocksWithResults = () => {
+  document.querySelectorAll(`[${HIDDEN_ATTR}]`).forEach((el) => {
+    if (el.querySelector("a[href] h3")) {
+      el.style.display = "";
+      el.removeAttribute(HIDDEN_ATTR);
+    }
+  });
+};
+
 const getThingsToKnow = () => {
   const thingsToKnow = document.querySelectorAll(DOM_SELECTORS.THINGS_TO_KNOW_TITLE);
   for (const el of thingsToKnow) {
@@ -210,13 +229,13 @@ const observer = new MutationObserver(() => {
     document.querySelector(DOM_SELECTORS.MAIN_BODY) ||
     document.querySelector(DOM_SELECTORS.MAIN_BODY_MOBILE);
 
+  restoreBlocksWithResults();
+
   const aiOverview = getAiOverview(mainBody);
 
   // Hide AI overview
-  if (aiOverview) aiOverview.style.display = CSS_VALUES.HIDDEN;
-  getAiOverviewTitleBlocks(mainBody).forEach((block) => {
-    block.style.display = CSS_VALUES.HIDDEN;
-  });
+  if (aiOverview) hideAiBlock(aiOverview);
+  getAiOverviewTitleBlocks(mainBody).forEach(hideAiBlock);
 
   // Restore padding after header tabs
   const headerTabs = document.querySelector(DOM_SELECTORS.HEADER_TABS);
