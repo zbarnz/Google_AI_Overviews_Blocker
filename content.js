@@ -56,6 +56,12 @@ const AI_MODE_SELECTORS = {
 };
 const AI_MODE_UDM = "50";
 
+// Results column, never hide this or anything containing it
+const RESULTS_AREA_SELECTOR = "#center_col, #search, #rso";
+
+const hidesResults = (el) =>
+  el.matches(RESULTS_AREA_SELECTOR) || !!el.querySelector(RESULTS_AREA_SELECTOR);
+
 // For each matching heading, check both possible div containers
 function getAiContainerParent(startEl) {
   let el = startEl;
@@ -74,9 +80,12 @@ function getAiContainerParent(startEl) {
     }
 
     // Google sometimes wraps the AI overview together with the organic results,
-    // so stop below any parent that also holds a result title link
+    // so stop below any parent that also holds the results (titles may not have loaded yet)
     const holdsOtherResults = [...parent.children].some(
-      (child) => child !== el && child.querySelector("a[href] h3"),
+      (child) =>
+        child !== el &&
+        (child.matches(RESULTS_AREA_SELECTOR) ||
+          child.querySelector(`${RESULTS_AREA_SELECTOR}, a[href] h3`)),
     );
     if (holdsOtherResults) return el;
 
@@ -141,20 +150,21 @@ const getAiOverviewTitleBlocks = (mainBody) => {
     )
     .map(getAiContainerParent)
     // Only boxes above the results, never #rso or anything containing it
-    .filter((block) => block.parentElement?.id === "rcnt" && !block.querySelector("#rso"));
+    .filter((block) => block.parentElement?.id === "rcnt" && !hidesResults(block));
 };
 
+// Save the original inline display so it can be restored (some wrappers use display: contents)
 const hideAiBlock = (el) => {
+  if (!el.hasAttribute(HIDDEN_ATTR)) el.setAttribute(HIDDEN_ATTR, el.style.display);
   el.style.display = CSS_VALUES.HIDDEN;
-  el.setAttribute(HIDDEN_ATTR, "");
 };
 
 // The page loads in pieces, so a block hidden before the results arrived
 // may turn out to wrap them; show it again and let this pass pick a smaller block
 const restoreBlocksWithResults = () => {
   document.querySelectorAll(`[${HIDDEN_ATTR}]`).forEach((el) => {
-    if (el.querySelector("a[href] h3")) {
-      el.style.display = "";
+    if (hidesResults(el) || el.querySelector("a[href] h3")) {
+      el.style.display = el.getAttribute(HIDDEN_ATTR);
       el.removeAttribute(HIDDEN_ATTR);
     }
   });
@@ -234,7 +244,7 @@ const observer = new MutationObserver(() => {
   const aiOverview = getAiOverview(mainBody);
 
   // Hide AI overview
-  if (aiOverview) hideAiBlock(aiOverview);
+  if (aiOverview && !hidesResults(aiOverview)) hideAiBlock(aiOverview);
   getAiOverviewTitleBlocks(mainBody).forEach(hideAiBlock);
 
   // Restore padding after header tabs
